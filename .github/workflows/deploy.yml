@@ -1,13 +1,11 @@
-name: Deploy to GitHub Pages
+name: Build and Deploy
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     
     steps:
@@ -17,7 +15,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-        cache: 'pnpm'
     
     - name: Install pnpm
       run: npm install -g pnpm
@@ -25,17 +22,36 @@ jobs:
     - name: Install dependencies
       run: pnpm install
     
-    - name: Build project
+    - name: Build frontend
       run: pnpm build
       env:
-        VITE_APP_ID: ${{ secrets.VITE_APP_ID }}
-        VITE_OAUTH_PORTAL_URL: ${{ secrets.VITE_OAUTH_PORTAL_URL }}
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        VITE_APP_ID: demo-app
+        VITE_OAUTH_PORTAL_URL: https://oauth.example.com
+        VITE_FRONTEND_FORGE_API_URL: https://api.example.com
+        VITE_FRONTEND_FORGE_API_KEY: demo-key
     
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
-        cname: omniagent.sasaburk.dev
+        name: build
+        path: dist
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: |
+          Automated build from commit ${{ github.sha }}
+          
+          ## How to Deploy
+          
+          1. Clone the repository
+          2. Install dependencies: `pnpm install`
+          3. Set environment variables in `.env`
+          4. Run migrations: `pnpm db:push`
+          5. Start server: `pnpm dev` (development) or `pnpm start` (production)
+        draft: false
+        prerelease: false
