@@ -274,3 +274,89 @@ export async function updateSystemStats(data: Partial<typeof systemStats.$inferI
     await db.update(systemStats).set(data as any).where(eq(systemStats.id, stats.id));
   }
 }
+
+// API Key functions
+export async function generateApiKey(userId: number, name: string): Promise<string> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { apiKeys } = await import("../drizzle/schema");
+  
+  // Generate a random API key
+  const key = `sk_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+  
+  await db.insert(apiKeys).values({
+    userId,
+    key,
+    name,
+  });
+
+  return key;
+}
+
+export async function getUserApiKeys(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { apiKeys } = await import("../drizzle/schema");
+  return db.select().from(apiKeys).where(eq(apiKeys.userId, userId));
+}
+
+export async function deleteApiKey(keyId: number) {
+  const db = await getDb();
+  if (!db) return false;
+
+  const { apiKeys } = await import("../drizzle/schema");
+  await db.delete(apiKeys).where(eq(apiKeys.id, keyId));
+  return true;
+}
+
+export async function verifyApiKey(key: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const { apiKeys } = await import("../drizzle/schema");
+  const result = await db.select().from(apiKeys).where(eq(apiKeys.key, key)).limit(1);
+  return result[0] ?? null;
+}
+
+// API Endpoint functions
+export async function createApiEndpoint(userId: number, name: string, url: string, method: string, description?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { apiEndpoints } = await import("../drizzle/schema");
+  await db.insert(apiEndpoints).values({
+    userId,
+    name,
+    url,
+    method,
+    description,
+  });
+}
+
+export async function getUserApiEndpoints(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { apiEndpoints } = await import("../drizzle/schema");
+  return db.select().from(apiEndpoints).where(eq(apiEndpoints.userId, userId));
+}
+
+export async function updateApiEndpoint(endpointId: number, data: any) {
+  const db = await getDb();
+  if (!db) return false;
+
+  const { apiEndpoints } = await import("../drizzle/schema");
+  await db.update(apiEndpoints).set(data).where(eq(apiEndpoints.id, endpointId));
+  return true;
+}
+
+export async function deleteApiEndpoint(endpointId: number) {
+  const db = await getDb();
+  if (!db) return false;
+
+  const { apiEndpoints } = await import("../drizzle/schema");
+  await db.delete(apiEndpoints).where(eq(apiEndpoints.id, endpointId));
+  return true;
+}

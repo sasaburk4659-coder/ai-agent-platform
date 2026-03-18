@@ -72,3 +72,32 @@ export const systemStats = mysqlTable("systemStats", {
 
 export type SystemStats = typeof systemStats.$inferSelect;
 export type InsertSystemStats = typeof systemStats.$inferInsert;
+
+export const apiKeys = mysqlTable("apiKeys", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  key: varchar("key", { length: 255 }).unique().notNull(), // Hashed API key
+  name: varchar("name", { length: 128 }).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastUsed: timestamp("lastUsed"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type InsertApiKey = typeof apiKeys.$inferInsert;
+
+export const apiEndpoints = mysqlTable("apiEndpoints", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  url: text("url").notNull(),
+  method: varchar("method", { length: 10 }).default("POST").notNull(), // GET, POST, PUT, DELETE
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ApiEndpoint = typeof apiEndpoints.$inferSelect;
+export type InsertApiEndpoint = typeof apiEndpoints.$inferInsert;

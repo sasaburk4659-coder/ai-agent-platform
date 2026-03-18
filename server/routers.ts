@@ -1,4 +1,5 @@
 import { COOKIE_NAME } from "@shared/const";
+import { invokeLLM } from "./_core/llm";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
@@ -117,6 +118,57 @@ export const appRouter = router({
     getTasks: protectedProcedure.query(async ({ ctx }) => {
       return db.getUserTasks(ctx.user.id);
     }),
+  }),
+  api: router({
+    generateKey: protectedProcedure
+      .input(z.object({ name: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const key = await db.generateApiKey(ctx.user.id, input.name);
+        return { success: true, key };
+      }),
+    getKeys: protectedProcedure.query(async ({ ctx }) => {
+      const keys = await db.getUserApiKeys(ctx.user.id);
+      return keys.map(k => ({
+        id: k.id,
+        name: k.name,
+        key: k.key.substring(0, 10) + '...',
+        isActive: k.isActive,
+        lastUsed: k.lastUsed,
+        createdAt: k.createdAt,
+      }));
+    }),
+    deleteKey: protectedProcedure
+      .input(z.object({ keyId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteApiKey(input.keyId);
+        return { success: true };
+      }),
+    createEndpoint: protectedProcedure
+      .input(z.object({ name: z.string(), url: z.string(), method: z.string(), description: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createApiEndpoint(ctx.user.id, input.name, input.url, input.method, input.description);
+        return { success: true };
+      }),
+    getEndpoints: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserApiEndpoints(ctx.user.id);
+    }),
+    updateEndpoint: protectedProcedure
+      .input(z.object({ endpointId: z.number(), name: z.string().optional(), url: z.string().optional(), method: z.string().optional(), description: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateApiEndpoint(input.endpointId, {
+          name: input.name,
+          url: input.url,
+          method: input.method,
+          description: input.description,
+        });
+        return { success: true };
+      }),
+    deleteEndpoint: protectedProcedure
+      .input(z.object({ endpointId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteApiEndpoint(input.endpointId);
+        return { success: true };
+      }),
   }),
   admin: router({
     getAllUsers: protectedProcedure.query(async ({ ctx }) => {
