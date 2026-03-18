@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Users, Zap, TrendingUp, Shield } from "lucide-react";
+import { Users, Zap, TrendingUp, Shield, Key, Link2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function AdminPanel() {
@@ -19,6 +19,16 @@ export default function AdminPanel() {
   const getAllUsersQuery = trpc.admin.getAllUsers.useQuery();
   const addCoinsMutation = trpc.admin.addCoinsToUser.useMutation();
   const getStatsQuery = trpc.admin.getSystemStats.useQuery();
+  const getKeysQuery = trpc.api.getKeys.useQuery();
+  const generateKeyMutation = trpc.api.generateKey.useMutation();
+  const deleteKeyMutation = trpc.api.deleteKey.useMutation();
+  const getEndpointsQuery = trpc.api.getEndpoints.useQuery();
+  const createEndpointMutation = trpc.api.createEndpoint.useMutation();
+  const deleteEndpointMutation = trpc.api.deleteEndpoint.useMutation();
+  const [newKeyName, setNewKeyName] = useState("");
+  const [newEndpointName, setNewEndpointName] = useState("");
+  const [newEndpointUrl, setNewEndpointUrl] = useState("");
+  const [newEndpointMethod, setNewEndpointMethod] = useState("POST");
 
   useEffect(() => {
     if (getAllUsersQuery.data) {
@@ -109,6 +119,174 @@ export default function AdminPanel() {
               </div>
             </div>
           </Card>
+        </div>
+
+        {/* API Management Section */}
+        <div className="mb-6 md:mb-8">
+          <h2 className="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-4">
+            {t("admin.apiManagement") || "API Management"}
+          </h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            {/* API Keys */}
+            <Card className="border-[#2a2f4a] bg-[#1a1f3a]/80 backdrop-blur">
+              <div className="p-4 md:p-6 border-b border-[#2a2f4a]">
+                <div className="flex items-center gap-2 mb-4">
+                  <Key className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-base md:text-lg font-semibold text-[#e0e0ff]">{t("admin.apiKeys") || "API Keys"}</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <Input
+                    type="text"
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                    placeholder={t("admin.keyName") || "Key name"}
+                    className="bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] text-sm"
+                  />
+                  <Button
+                    onClick={async () => {
+                      if (!newKeyName) {
+                        toast.error(t("admin.enterKeyName") || "Enter key name");
+                        return;
+                      }
+                      try {
+                        await generateKeyMutation.mutateAsync({ name: newKeyName });
+                        toast.success(t("admin.keyGenerated") || "API Key generated!");
+                        setNewKeyName("");
+                        getKeysQuery.refetch();
+                      } catch (error: any) {
+                        toast.error(error.message);
+                      }
+                    }}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white text-sm"
+                  >
+                    {t("admin.generateKey") || "Generate Key"}
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="p-4 md:p-6">
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {getKeysQuery.data?.map((key: any) => (
+                    <div key={key.id} className="flex items-center justify-between p-3 bg-[#0a0e27] rounded border border-[#2a2f4a]">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs md:text-sm text-[#e0e0ff] font-mono">{key.key}</p>
+                        <p className="text-xs text-[#a0a0c0]">{key.name}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            await deleteKeyMutation.mutateAsync({ keyId: key.id });
+                            toast.success(t("admin.keyDeleted") || "Key deleted");
+                            getKeysQuery.refetch();
+                          } catch (error: any) {
+                            toast.error(error.message);
+                          }
+                        }}
+                        className="text-xs py-1 px-2 ml-2"
+                      >
+                        {t("admin.delete") || "Delete"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+            
+            {/* API Endpoints */}
+            <Card className="border-[#2a2f4a] bg-[#1a1f3a]/80 backdrop-blur">
+              <div className="p-4 md:p-6 border-b border-[#2a2f4a]">
+                <div className="flex items-center gap-2 mb-4">
+                  <Link2 className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-base md:text-lg font-semibold text-[#e0e0ff]">{t("admin.apiEndpoints") || "API Endpoints"}</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <Input
+                    type="text"
+                    value={newEndpointName}
+                    onChange={(e) => setNewEndpointName(e.target.value)}
+                    placeholder={t("admin.endpointName") || "Endpoint name"}
+                    className="bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] text-sm"
+                  />
+                  <Input
+                    type="text"
+                    value={newEndpointUrl}
+                    onChange={(e) => setNewEndpointUrl(e.target.value)}
+                    placeholder={t("admin.endpointUrl") || "https://example.com/api"}
+                    className="bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] text-sm"
+                  />
+                  <select
+                    value={newEndpointMethod}
+                    onChange={(e) => setNewEndpointMethod(e.target.value)}
+                    className="w-full bg-[#0a0e27] border border-[#2a2f4a] text-[#e0e0ff] text-sm rounded px-3 py-2"
+                  >
+                    <option>GET</option>
+                    <option>POST</option>
+                    <option>PUT</option>
+                    <option>DELETE</option>
+                  </select>
+                  <Button
+                    onClick={async () => {
+                      if (!newEndpointName || !newEndpointUrl) {
+                        toast.error(t("admin.fillAllFields") || "Fill all fields");
+                        return;
+                      }
+                      try {
+                        await createEndpointMutation.mutateAsync({
+                          name: newEndpointName,
+                          url: newEndpointUrl,
+                          method: newEndpointMethod,
+                        });
+                        toast.success(t("admin.endpointCreated") || "Endpoint created!");
+                        setNewEndpointName("");
+                        setNewEndpointUrl("");
+                        getEndpointsQuery.refetch();
+                      } catch (error: any) {
+                        toast.error(error.message);
+                      }
+                    }}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white text-sm"
+                  >
+                    {t("admin.createEndpoint") || "Create Endpoint"}
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="p-4 md:p-6">
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {getEndpointsQuery.data?.map((endpoint: any) => (
+                    <div key={endpoint.id} className="flex items-center justify-between p-3 bg-[#0a0e27] rounded border border-[#2a2f4a]">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs md:text-sm text-[#e0e0ff]">{endpoint.name}</p>
+                        <p className="text-xs text-[#a0a0c0] font-mono truncate">{endpoint.url}</p>
+                        <p className="text-xs text-[#a0a0c0]">{endpoint.method}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            await deleteEndpointMutation.mutateAsync({ endpointId: endpoint.id });
+                            toast.success(t("admin.endpointDeleted") || "Endpoint deleted");
+                            getEndpointsQuery.refetch();
+                          } catch (error: any) {
+                            toast.error(error.message);
+                          }
+                        }}
+                        className="text-xs py-1 px-2 ml-2"
+                      >
+                        {t("admin.delete") || "Delete"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
