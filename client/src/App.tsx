@@ -4,13 +4,35 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useAuth } from "@/_core/hooks/useAuth";
+import Auth from "./pages/Auth";
+import Agent from "./pages/Agent";
 import Home from "./pages/Home";
 
-
 function Router() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#1a0f2e] to-[#0a0e27] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#a0a0c0]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      {isAuthenticated ? (
+        <>
+          <Route path={"/"} component={Agent} />
+          <Route path={"/home"} component={Home} />
+        </>
+      ) : (
+        <Route path={"*"} component={Auth} />
+      )}
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -27,7 +49,7 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider
-        defaultTheme="light"
+        defaultTheme="dark"
         // switchable
       >
         <TooltipProvider>
