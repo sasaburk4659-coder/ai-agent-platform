@@ -7,8 +7,10 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
 import { Mail, Lock, User } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Auth() {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -21,7 +23,7 @@ export default function Auth() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !email || !password) {
-      toast.error("Please fill in all fields");
+      toast.error(t("auth.fillAllFields"));
       return;
     }
 
@@ -38,13 +40,13 @@ export default function Auth() {
         ipAddress,
       });
 
-      toast.success("Account created! Please log in.");
+      toast.success(t("auth.accountCreated"));
       setIsLogin(true);
       setUsername("");
       setEmail("");
       setPassword("");
     } catch (error: any) {
-      toast.error(error.message || "Registration failed");
+      toast.error(error.message || t("auth.registrationFailed"));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-      toast.error("Please fill in all fields");
+      toast.error(t("auth.fillAllFields"));
       return;
     }
 
@@ -64,17 +66,17 @@ export default function Auth() {
         password,
       });
 
-      toast.success("Login successful!");
+      toast.success(t("auth.loginSuccess"));
       window.location.href = "/";
     } catch (error: any) {
-      toast.error(error.message || "Login failed");
+      toast.error(error.message || t("auth.loginFailed"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#1a0f2e] to-[#0a0e27] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#1a0f2e] to-[#0a0e27] flex items-center justify-center p-4 md:p-6">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl"></div>
@@ -82,48 +84,48 @@ export default function Auth() {
       </div>
 
       <Card className="w-full max-w-md relative z-10 border-[#2a2f4a] bg-[#1a1f3a]/80 backdrop-blur">
-        <div className="p-8">
+        <div className="p-6 md:p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">
               OmniAgent
             </h1>
-            <p className="text-[#a0a0c0] text-sm">Your All-Capable AI Agent</p>
+            <p className="text-[#a0a0c0] text-xs md:text-sm">{t("auth.subtitle")}</p>
           </div>
 
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-[#0a0e27] border border-[#2a2f4a]">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsTrigger value="login" className="text-xs md:text-sm">{t("auth.login")}</TabsTrigger>
+              <TabsTrigger value="register" className="text-xs md:text-sm">{t("auth.register")}</TabsTrigger>
             </TabsList>
 
             {/* Login Tab */}
             <TabsContent value="login" className="space-y-4 mt-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="text-sm text-[#e0e0ff] mb-2 block">Username</label>
+                  <label className="text-xs md:text-sm text-[#e0e0ff] mb-2 block">{t("auth.username")}</label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 w-4 h-4 text-[#00d9ff]" />
                     <Input
                       type="text"
-                      placeholder="Enter username"
+                      placeholder={t("auth.enterUsername")}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c]"
+                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c] text-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm text-[#e0e0ff] mb-2 block">Password</label>
+                  <label className="text-xs md:text-sm text-[#e0e0ff] mb-2 block">{t("auth.password")}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 w-4 h-4 text-[#00d9ff]" />
                     <Input
                       type="password"
-                      placeholder="Enter password"
+                      placeholder={t("auth.enterPassword")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c]"
+                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c] text-sm"
                     />
                   </div>
                 </div>
@@ -131,9 +133,9 @@ export default function Auth() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-2 rounded-lg transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-2 rounded-lg transition-all duration-300 text-sm"
                 >
-                  {loading ? "Logging in..." : "Login"}
+                  {loading ? t("auth.loggingIn") : t("auth.loginButton")}
                 </Button>
               </form>
 
@@ -141,17 +143,17 @@ export default function Auth() {
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-[#2a2f4a]"></div>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[#1a1f3a] text-[#a0a0c0]">or</span>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-2 bg-[#1a1f3a] text-[#a0a0c0]">{t("auth.or")}</span>
                 </div>
               </div>
 
               <Button
                 onClick={() => (window.location.href = getLoginUrl())}
-                className="w-full bg-[#0a0e27] border border-[#2a2f4a] text-[#e0e0ff] hover:bg-[#1a1f3a] py-2 rounded-lg transition-all duration-300"
+                className="w-full bg-[#0a0e27] border border-[#2a2f4a] text-[#e0e0ff] hover:bg-[#1a1f3a] py-2 rounded-lg transition-all duration-300 text-sm"
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Continue with Google
+                {t("auth.continueWithGoogle")}
               </Button>
             </TabsContent>
 
@@ -159,43 +161,43 @@ export default function Auth() {
             <TabsContent value="register" className="space-y-4 mt-6">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div>
-                  <label className="text-sm text-[#e0e0ff] mb-2 block">Username</label>
+                  <label className="text-xs md:text-sm text-[#e0e0ff] mb-2 block">{t("auth.username")}</label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 w-4 h-4 text-[#00d9ff]" />
                     <Input
                       type="text"
-                      placeholder="Choose a username"
+                      placeholder={t("auth.chooseUsername")}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c]"
+                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c] text-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm text-[#e0e0ff] mb-2 block">Email</label>
+                  <label className="text-xs md:text-sm text-[#e0e0ff] mb-2 block">{t("auth.email")}</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 w-4 h-4 text-[#00d9ff]" />
                     <Input
                       type="email"
-                      placeholder="Enter email"
+                      placeholder={t("auth.enterEmail")}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c]"
+                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c] text-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm text-[#e0e0ff] mb-2 block">Password</label>
+                  <label className="text-xs md:text-sm text-[#e0e0ff] mb-2 block">{t("auth.password")}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 w-4 h-4 text-[#00d9ff]" />
                     <Input
                       type="password"
-                      placeholder="Create a password"
+                      placeholder={t("auth.createPassword")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c]"
+                      className="pl-10 bg-[#0a0e27] border-[#2a2f4a] text-[#e0e0ff] placeholder-[#3d3d5c] text-sm"
                     />
                   </div>
                 </div>
@@ -203,9 +205,9 @@ export default function Auth() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-2 rounded-lg transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-2 rounded-lg transition-all duration-300 text-sm"
                 >
-                  {loading ? "Creating account..." : "Create Account"}
+                  {loading ? t("auth.creatingAccount") : t("auth.registerButton")}
                 </Button>
               </form>
 
@@ -213,23 +215,23 @@ export default function Auth() {
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-[#2a2f4a]"></div>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[#1a1f3a] text-[#a0a0c0]">or</span>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-2 bg-[#1a1f3a] text-[#a0a0c0]">{t("auth.or")}</span>
                 </div>
               </div>
 
               <Button
                 onClick={() => (window.location.href = getLoginUrl())}
-                className="w-full bg-[#0a0e27] border border-[#2a2f4a] text-[#e0e0ff] hover:bg-[#1a1f3a] py-2 rounded-lg transition-all duration-300"
+                className="w-full bg-[#0a0e27] border border-[#2a2f4a] text-[#e0e0ff] hover:bg-[#1a1f3a] py-2 rounded-lg transition-all duration-300 text-sm"
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Sign up with Google
+                {t("auth.signUpWithGoogle")}
               </Button>
             </TabsContent>
           </Tabs>
 
           <p className="text-center text-xs text-[#3d3d5c] mt-6">
-            Maximum 5 users per IP address
+            {t("auth.maxUsersPerIp")}
           </p>
         </div>
       </Card>
