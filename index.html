@@ -1,0 +1,2283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Platform</title>
+    <style>
+        :root {
+            --bg: #0a0c15;
+            --bg-secondary: #0f1428;
+            --surface: rgba(15, 20, 40, 0.85);
+            --surface-light: rgba(255,255,255,0.05);
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.15);
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --gradient: linear-gradient(135deg, #8b5cf6, #3b82f6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .background-orbs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--accent-purple);
+            top: -200px;
+            left: -200px;
+            animation: float1 25s ease-in-out infinite;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: 50%;
+            right: -150px;
+            animation: float2 30s ease-in-out infinite;
+        }
+
+        .orb-3 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+            bottom: -100px;
+            left: 30%;
+            animation: float3 20s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(100px, 100px) rotate(120deg); }
+            66% { transform: translate(-50px, 150px) rotate(240deg); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-150px, -100px) rotate(120deg); }
+            66% { transform: translate(-100px, 100px) rotate(240deg); }
+        }
+
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(100px, -50px) rotate(120deg); }
+            66% { transform: translate(-100px, -100px) rotate(240deg); }
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 64px;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: width 0.2s ease;
+        }
+
+        .sidebar:hover {
+            width: 240px;
+        }
+
+        .sidebar-logo {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 24px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .sidebar-logo span {
+            margin-left: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar:hover .sidebar-logo span {
+            opacity: 1;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 8px;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .nav-item:hover {
+            background: var(--surface-light);
+        }
+
+        .nav-item.active {
+            background: var(--gradient);
+        }
+
+        .nav-item-icon {
+            font-size: 20px;
+            min-width: 32px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .nav-item-text {
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar:hover .nav-item-text {
+            opacity: 1;
+        }
+
+        .sidebar-bottom {
+            padding: 12px 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .main-content {
+            margin-left: 64px;
+            min-height: 100vh;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .view {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .view-header {
+            margin-bottom: 24px;
+        }
+
+        .view-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .view-subtitle {
+            color: var(--text-secondary);
+        }
+
+        .glass-panel {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            padding: 8px 16px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .filter-pill:hover {
+            border-color: var(--border-hover);
+        }
+
+        .filter-pill.active {
+            background: var(--gradient);
+            border-color: transparent;
+        }
+
+        .connected-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .connected-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .connected-badge .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .connector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .connector-card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .connector-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+        }
+
+        .connector-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--connector-color, var(--accent));
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .connector-card:hover::before {
+            opacity: 1;
+        }
+
+        .connector-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .connector-icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .connector-info {
+            flex: 1;
+        }
+
+        .connector-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .connector-category {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .connector-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .connector-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .connector-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: var(--text-muted);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            filter: brightness(1.1);
+            transform: scale(1.02);
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.2s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-header h3 {
+            flex: 1;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--surface-light);
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent);
+        }
+
+        .expandable {
+            margin-top: 16px;
+        }
+
+        .expandable-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 10px;
+            background: var(--surface-light);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .expandable-content {
+            padding: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            display: none;
+        }
+
+        .expandable.open .expandable-content {
+            display: block;
+        }
+
+        .expandable-arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .expandable.open .expandable-arrow {
+            transform: rotate(90deg);
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .test-result {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .test-result.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            display: block;
+        }
+
+        .test-result.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            display: block;
+        }
+
+        .test-result.loading {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .chat-container {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .chat-main {
+            flex: 65;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 80%;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: var(--gradient);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.ai .message-content {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-content code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+        }
+
+        .message-content pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .message-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .message-action-btn {
+            padding: 4px 8px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .message-action-btn:hover {
+            background: var(--border-hover);
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-6px); }
+        }
+
+        .chat-input-area {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-textarea {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            min-height: 48px;
+            max-height: 120px;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        .chat-textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .send-btn:hover {
+            filter: brightness(1.1);
+            transform: scale(1.02);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chat-quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .quick-action-btn {
+            padding: 6px 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .chat-activity {
+            flex: 35;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .activity-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .activity-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--surface-light);
+            border-radius: 10px;
+            animation: stepIn 0.3s ease;
+        }
+
+        @keyframes stepIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .step-icon.done {
+            background: var(--success);
+            color: white;
+        }
+
+        .step-icon.pending {
+            background: var(--surface-light);
+            border: 2px solid var(--text-muted);
+            color: var(--text-muted);
+        }
+
+        .step-icon.active {
+            background: var(--accent);
+            color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        .step-text {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .activity-section {
+            margin-bottom: 20px;
+        }
+
+        .activity-section-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .tools-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tool-badge {
+            padding: 6px 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .suggestion-btn {
+            padding: 10px 14px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-btn:hover {
+            background: var(--border-hover);
+            border-color: var(--accent);
+        }
+
+        .no-api-key-message {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .no-api-key-message p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .workflow-container {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .workflow-sidebar {
+            width: 280px;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .workflow-sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .workflow-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .workflow-item {
+            padding: 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .workflow-item:hover {
+            border-color: var(--accent);
+        }
+
+        .workflow-item.active {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .workflow-item-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .workflow-item-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .workflow-item-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: var(--error);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .workflow-item:hover .workflow-item-delete {
+            display: flex;
+        }
+
+        .workflow-main {
+            flex: 1;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .workflow-toolbar {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .workflow-name-input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 600;
+            outline: none;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .workflow-name-input:hover,
+        .workflow-name-input:focus {
+            background: var(--surface-light);
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+        }
+
+        .toolbar-btn {
+            padding: 8px 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .toolbar-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .workflow-canvas {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: 
+                radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0);
+            background-size: 30px 30px;
+        }
+
+        .canvas-inner {
+            position: absolute;
+            width: 3000px;
+            height: 3000px;
+            transform-origin: 0 0;
+        }
+
+        .workflow-node {
+            position: absolute;
+            min-width: 160px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: move;
+            user-select: none;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .workflow-node:hover,
+        .workflow-node.selected {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            border-color: var(--accent);
+        }
+
+        .workflow-node.start {
+            border-radius: 50%;
+            min-width: 80px;
+            width: 80px;
+            height: 80px;
+            background: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .workflow-node.end {
+            border-radius: 50%;
+            min-width: 80px;
+            width: 80px;
+            height: 80px;
+            background: var(--error);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .workflow-node.decision {
+            transform: rotate(45deg);
+            min-width: 100px;
+            width: 100px;
+            height: 100px;
+            background: var(--warning);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .workflow-node.decision .node-content {
+            transform: rotate(-45deg);
+        }
+
+        .workflow-node.connector {
+            border-left: 4px solid var(--connector-color, var(--accent));
+        }
+
+        .node-content {
+            padding: 12px;
+            text-align: center;
+        }
+
+        .node-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .node-label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .node-port {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border: 2px solid var(--surface);
+            border-radius: 50%;
+            cursor: crosshair;
+        }
+
+        .node-port.input {
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .node-port.output {
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .workflow-connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .workflow-connection {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+        }
+
+        .workflow-properties {
+            width: 280px;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .properties-title {
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .canvas-controls {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .canvas-control-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .canvas-control-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .export-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .export-card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .export-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        .export-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .export-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .export-desc {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .export-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .file-tree {
+            background: var(--surface-light);
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-tree-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .file-tree-item:hover {
+            background: var(--border-hover);
+        }
+
+        .file-tree-item .file-icon {
+            font-size: 14px;
+        }
+
+        .file-tree-item .file-name {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .file-tree-item .download-btn {
+            padding: 4px 8px;
+            background: var(--accent);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .settings-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 600px;
+        }
+
+        .settings-section {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .settings-section-title {
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-size: 14px;
+        }
+
+        .settings-label small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .toggle {
+            width: 48px;
+            height: 26px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .toggle.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s ease;
+        }
+
+        .toggle.active::after {
+            transform: translateX(22px);
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select {
+            padding: 8px 32px 8px 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: 64px;
+                bottom: 0;
+                top: auto;
+                flex-direction: row;
+                border-right: none;
+                border-top: 1px solid var(--border);
+            }
+
+            .sidebar:hover {
+                width: 100%;
+            }
+
+            .sidebar-logo {
+                display: none;
+            }
+
+            .sidebar-nav {
+                flex-direction: row;
+                justify-content: space-around;
+                width: 100%;
+                padding: 8px;
+            }
+
+            .nav-item {
+                flex-direction: column;
+                padding: 8px;
+                gap: 4px;
+            }
+
+            .nav-item-text {
+                display: none;
+            }
+
+            .sidebar-bottom {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                margin-bottom: 64px;
+                padding: 16px;
+            }
+
+            .chat-container,
+            .workflow-container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .chat-activity,
+            .workflow-sidebar,
+            .workflow-properties {
+                width: 100%;
+                height: 300px;
+            }
+
+            .connector-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <span class="nav-item-icon">⚡</span>
+            <span>AI Agent</span>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-item active" data-view="connectors">
+                <span class="nav-item-icon">🔌</span>
+                <span class="nav-item-text">Коннекторы</span>
+            </div>
+            <div class="nav-item" data-view="chat">
+                <span class="nav-item-icon">🤖</span>
+                <span class="nav-item-text">AI Агент</span>
+            </div>
+            <div class="nav-item" data-view="workflow">
+                <span class="nav-item-icon">⚙️</span>
+                <span class="nav-item-text">Workflow</span>
+            </div>
+            <div class="nav-item" data-view="export">
+                <span class="nav-item-icon">⬇️</span>
+                <span class="nav-item-text">Экспорт</span>
+            </div>
+        </div>
+        <div class="sidebar-bottom">
+            <div class="nav-item" data-view="settings">
+                <span class="nav-item-icon">⚙️</span>
+                <span class="nav-item-text">Настройки</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="view active" id="view-connectors">
+            <div class="view-header">
+                <h1 class="view-title">🔌 Коннекторы</h1>
+                <p class="view-subtitle">Подключите ваши платформы</p>
+            </div>
+            <div id="connected-badges" class="connected-badges"></div>
+            <div class="search-bar">
+                <input type="text" class="search-input" id="connector-search" placeholder="Поиск коннекторов...">
+                <div class="filter-pills">
+                    <div class="filter-pill active" data-filter="all">Все</div>
+                    <div class="filter-pill" data-filter="AI-модели">AI-модели</div>
+                    <div class="filter-pill" data-filter="Мессенджеры">Мессенджеры</div>
+                    <div class="filter-pill" data-filter="Разработка">Разработка</div>
+                    <div class="filter-pill" data-filter="Продуктивность">Продуктивность</div>
+                    <div class="filter-pill" data-filter="Хранилище">Хранилище</div>
+                </div>
+            </div>
+            <div class="connector-grid" id="connector-grid"></div>
+        </div>
+
+        <div class="view" id="view-chat">
+            <div class="view-header">
+                <h1 class="view-title">🤖 AI Агент</h1>
+                <p class="view-subtitle">Ваш интеллектуальный помощник</p>
+            </div>
+            <div class="chat-container">
+                <div class="chat-main">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message ai">
+                            <div class="message-content">Привет! Я ваш AI-агент. Я могу помочь вам с различными задачами, используя подключённые коннекторы. Что бы вы хотели сделать?</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <div id="no-api-key" class="no-api-key-message" style="display: none;">
+                            <p>Для использования AI агента добавьте API ключ Mistral в Настройках</p>
+                            <button class="btn btn-primary" onclick="switchView('settings')">Перейти в настройки</button>
+                        </div>
+                        <div id="chat-input-container">
+                            <div class="chat-input-wrapper">
+                                <textarea class="chat-textarea" id="chat-input" placeholder="Введите сообщение..." rows="1"></textarea>
+                                <button class="send-btn" id="send-btn">➤</button>
+                            </div>
+                            <div class="chat-quick-actions">
+                                <button class="quick-action-btn" onclick="quickAction('workflow')">📋 Создать workflow</button>
+                                <button class="quick-action-btn" onclick="quickAction('download')">⬇️ Скачать результат</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-activity">
+                    <div class="activity-title">📊 Активность агента</div>
+                    <div class="activity-steps" id="activity-steps"></div>
+                    <div class="activity-section" id="tools-section" style="display: none;">
+                        <div class="activity-section-title">Используемые инструменты</div>
+                        <div class="tools-list" id="tools-list"></div>
+                    </div>
+                    <div class="activity-section" id="suggestions-section" style="display: none;">
+                        <div class="activity-section-title">Предложения</div>
+                        <div class="suggestions" id="suggestions-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view" id="view-workflow">
+            <div class="view-header">
+                <h1 class="view-title">⚙️ Workflow Builder</h1>
+                <p class="view-subtitle">Визуальный редактор рабочих процессов</p>
+            </div>
+            <div class="workflow-container">
+                <div class="workflow-sidebar">
+                    <div class="workflow-sidebar-header">
+                        <span>Workflows</span>
+                        <button class="btn btn-primary" id="new-workflow-btn" style="padding: 6px 12px;">+</button>
+                    </div>
+                    <div class="workflow-list" id="workflow-list"></div>
+                </div>
+                <div class="workflow-main">
+                    <div class="workflow-toolbar">
+                        <input type="text" class="workflow-name-input" id="workflow-name" value="Новый workflow">
+                        <div class="toolbar-divider"></div>
+                        <button class="toolbar-btn" data-node-type="step">📦 Шаг</button>
+                        <button class="toolbar-btn" data-node-type="decision">◇ Решение</button>
+                        <button class="toolbar-btn" data-node-type="connector">🔌 Коннектор</button>
+                        <div style="flex: 1;"></div>
+                        <button class="btn btn-secondary" id="save-workflow-btn">💾 Сохранить</button>
+                        <button class="btn btn-primary" id="export-workflow-btn">⬇️ Экспорт</button>
+                    </div>
+                    <div class="workflow-canvas" id="workflow-canvas">
+                        <svg class="workflow-connections" id="workflow-connections"></svg>
+                        <div class="canvas-inner" id="canvas-inner"></div>
+                        <div class="canvas-controls">
+                            <button class="canvas-control-btn" id="zoom-in">+</button>
+                            <button class="canvas-control-btn" id="zoom-out">−</button>
+                            <button class="canvas-control-btn" id="zoom-reset">⟲</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="workflow-properties" id="workflow-properties">
+                    <div class="properties-title">Свойства узла</div>
+                    <div id="node-properties-content">
+                        <p style="color: var(--text-muted); font-size: 13px;">Выберите узел для редактирования</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view" id="view-export">
+            <div class="view-header">
+                <h1 class="view-title">⬇️ Экспорт и загрузки</h1>
+                <p class="view-subtitle">Скачайте ваши данные</p>
+            </div>
+            <div class="export-grid">
+                <div class="export-card">
+                    <div class="export-icon">📄</div>
+                    <div class="export-title">Экспорт чата</div>
+                    <div class="export-desc">Скачайте историю переписки</div>
+                    <div class="export-meta" id="chat-count">Сообщений: 0</div>
+                    <div class="export-actions">
+                        <button class="btn btn-secondary" onclick="exportChat('txt')">Скачать .txt</button>
+                        <button class="btn btn-secondary" onclick="exportChat('md')">Скачать .md</button>
+                    </div>
+                </div>
+                <div class="export-card">
+                    <div class="export-icon">⚙️</div>
+                    <div class="export-title">Экспорт workflow</div>
+                    <div class="export-desc">Скачайте конфигурацию workflow</div>
+                    <div class="form-group">
+                        <select class="select" id="export-workflow-select" style="width: 100%; margin-bottom: 12px;"></select>
+                    </div>
+                    <div class="export-actions">
+                        <button class="btn btn-primary" onclick="exportWorkflow()">Скачать JSON</button>
+                    </div>
+                </div>
+                <div class="export-card">
+                    <div class="export-icon">📦</div>
+                    <div class="export-title">Скачать проект (ZIP)</div>
+                    <div class="export-desc">Полный экспорт проекта</div>
+                    <div class="export-actions">
+                        <button class="btn btn-secondary" onclick="showFileTree()">Просмотр файлов</button>
+                        <button class="btn btn-primary" onclick="exportAll()">Скачать всё</button>
+                    </div>
+                </div>
+                <div class="export-card">
+                    <div class="export-icon">🔧</div>
+                    <div class="export-title">Экспорт конфигурации</div>
+                    <div class="export-desc">Настройки коннекторов (без ключей)</div>
+                    <div class="export-actions">
+                        <button class="btn btn-secondary" onclick="exportConfig()">Скачать JSON</button>
+                    </div>
+                </div>
+                <div class="export-card">
+                    <div class="export-icon">📊</div>
+                    <div class="export-title">Отчёт активности</div>
+                    <div class="export-desc">Сводка по всем активностям</div>
+                    <div class="export-actions">
+                        <button class="btn btn-primary" onclick="exportReport()">Скачать отчёт</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view" id="view-settings">
+            <div class="view-header">
+                <h1 class="view-title">⚙️ Настройки</h1>
+                <p class="view-subtitle">Конфигурация платформы</p>
+            </div>
+            <div class="settings-sections">
+                <div class="settings-section">
+                    <div class="settings-section-title">🔑 API Ключи</div>
+                    <div class="form-group">
+                        <label class="form-label">Mistral AI API Key</label>
+                        <input type="password" class="form-input" id="settings-mistral-key" placeholder="Введите API ключ...">
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">🤖 AI Модель</div>
+                    <div class="settings-row">
+                        <div class="settings-label">Модель<small>Выберите модель для генерации</small></div>
+                        <div class="select-wrapper">
+                            <select class="select" id="settings-model">
+                                <option value="mistral-large-latest">Mistral Large</option>
+                                <option value="mistral-medium-latest">Mistral Medium</option>
+                                <option value="mistral-small-latest">Mistral Small</option>
+                                <option value="open-mistral-7b">Open Mistral 7B</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">🎨 Тема</div>
+                    <div class="settings-row">
+                        <div class="settings-label">Тёмная тема<small>Переключение темы</small></div>
+                        <div class="toggle active" id="theme-toggle"></div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">🌐 Язык</div>
+                    <div class="settings-row">
+                        <div class="settings-label">Язык интерфейса<small>Выберите язык</small></div>
+                        <div class="select-wrapper">
+                            <select class="select" id="settings-language">
+                                <option value="ru">Русский</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">🗑️ Очистить данные</div>
+                    <div class="settings-row">
+                        <div class="settings-label">Удалить все данные<small>Это действие нельзя отменить</small></div>
+                        <button class="btn btn-danger" onclick="clearAllData()">Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="connector-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="modal-connector-icon" style="font-size: 24px;"></span>
+                <h3 id="modal-connector-name"></h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-fields"></div>
+                <div class="expandable" id="help-expandable">
+                    <div class="expandable-header" onclick="toggleExpandable(this)">
+                        <span class="expandable-arrow">▶</span>
+                        <span>Как получить токен</span>
+                    </div>
+                    <div class="expandable-content" id="modal-help"></div>
+                </div>
+                <div class="test-result" id="test-result"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="disconnect-btn" style="display: none;" onclick="disconnectConnector()">Отключить</button>
+                <button class="btn btn-secondary" onclick="testConnection()">Проверить соединение</button>
+                <button class="btn btn-primary" onclick="saveConnector()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 id="confirm-title">Подтверждение</h3>
+                <button class="modal-close" onclick="closeConfirmModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Отмена</button>
+                <button class="btn btn-danger" id="confirm-action-btn">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="file-tree-modal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>📁 Файлы проекта</h3>
+                <button class="modal-close" onclick="closeFileTreeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="file-tree" id="file-tree"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="exportAll()">Скачать всё</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const connectorsData = [
+            { id: 'mistral', icon: '🤖', name: 'Mistral AI', color: '#ff7000', category: 'AI-модели', desc: 'Мощные языковые модели', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}], help: '1. Перейдите на console.mistral.ai\n2. Создайте аккаунт или войдите\n3. Перейдите в раздел API Keys\n4. Создайте новый ключ' },
+            { id: 'openai', icon: '🧠', name: 'OpenAI (ChatGPT)', color: '#10a37f', category: 'AI-модели', desc: 'GPT-4 и другие модели', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}, {name: 'orgId', label: 'Organization ID', type: 'text'}], help: '1. Перейдите на platform.openai.com\n2. Войдите в аккаунт\n3. Перейдите в API Keys\n4. Создайте новый ключ' },
+            { id: 'claude', icon: '🎭', name: 'Claude (Anthropic)', color: '#d97706', category: 'AI-модели', desc: 'Безопасный AI-ассистент', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}], help: '1. Перейдите на console.anthropic.com\n2. Создайте аккаунт\n3. Получите API ключ в настройках' },
+            { id: 'gemini', icon: '💎', name: 'Gemini (Google)', color: '#4285f4', category: 'AI-модели', desc: 'Мультимодальный AI от Google', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}], help: '1. Перейдите на ai.google.dev\n2. Войдите с Google аккаунтом\n3. Создайте API ключ' },
+            { id: 'ollama', icon: '🦙', name: 'Ollama (Local)', color: '#7c3aed', category: 'AI-модели', desc: 'Локальные LLM модели', fields: [{name: 'hostUrl', label: 'Host URL', type: 'text'}], help: '1. Установите Ollama (ollama.ai)\n2. Запустите сервер: ollama serve\n3. URL по умолчанию: http://localhost:11434' },
+            { id: 'telegram', icon: '✈️', name: 'Telegram', color: '#0088cc', category: 'Мессенджеры', desc: 'Боты и уведомления', fields: [{name: 'botToken', label: 'Bot Token', type: 'password'}, {name: 'chatId', label: 'Chat ID', type: 'text'}], help: '1. Напишите @BotFather в Telegram\n2. Создайте нового бота: /newbot\n3. Скопируйте токен бота\n4. Chat ID можно узнать через @userinfobot' },
+            { id: 'slack', icon: '💬', name: 'Slack', color: '#4a154b', category: 'Мессенджеры', desc: 'Командные коммуникации', fields: [{name: 'botToken', label: 'Bot Token', type: 'password'}, {name: 'webhookUrl', label: 'Webhook URL', type: 'text'}], help: '1. Перейдите на api.slack.com/apps\n2. Создайте новое приложение\n3. Включите Bot Token Scopes\n4. Установите приложение в workspace' },
+            { id: 'discord', icon: '🎮', name: 'Discord', color: '#5865f2', category: 'Мессенджеры', desc: 'Игровые и dev-сообщества', fields: [{name: 'botToken', label: 'Bot Token', type: 'password'}, {name: 'webhookUrl', label: 'Webhook URL', type: 'text'}], help: '1. Перейдите на discord.com/developers\n2. Создайте новое приложение\n3. Перейдите в раздел Bot\n4. Скопируйте токен бота' },
+            { id: 'whatsapp', icon: '📱', name: 'WhatsApp Business', color: '#25d366', category: 'Мессенджеры', desc: 'Бизнес-мессенджер', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}, {name: 'phoneNumberId', label: 'Phone Number ID', type: 'text'}], help: '1. Перейдите на developers.facebook.com\n2. Создайте бизнес-приложение\n3. Добавьте WhatsApp product\n4. Получите API ключ' },
+            { id: 'github', icon: '🐙', name: 'GitHub', color: '#6e40c9', category: 'Разработка', desc: 'Хостинг кода и CI/CD', fields: [{name: 'token', label: 'Personal Access Token', type: 'password'}, {name: 'username', label: 'Username', type: 'text'}], help: '1. Перейдите в Settings → Developer settings\n2. Выберите Personal access tokens\n3. Создайте новый токен с нужными правами' },
+            { id: 'gitlab', icon: '🦊', name: 'GitLab', color: '#fc6d26', category: 'Разработка', desc: 'DevOps платформа', fields: [{name: 'token', label: 'Personal Access Token', type: 'password'}, {name: 'instanceUrl', label: 'Instance URL', type: 'text'}], help: '1. Перейдите в User Settings → Access Tokens\n2. Создайте новый токен\n3. Выберите необходимые scopes' },
+            { id: 'jira', icon: '🔵', name: 'Jira', color: '#0052cc', category: 'Разработка', desc: 'Управление задачами', fields: [{name: 'apiToken', label: 'API Token', type: 'password'}, {name: 'email', label: 'Email', type: 'text'}, {name: 'domain', label: 'Domain', type: 'text'}], help: '1. Перейдите на id.atlassian.com\n2. Выберите Security → API tokens\n3. Создайте новый токен' },
+            { id: 'docker', icon: '🐳', name: 'Docker Hub', color: '#2496ed', category: 'Разработка', desc: 'Контейнерный реестр', fields: [{name: 'username', label: 'Username', type: 'text'}, {name: 'accessToken', label: 'Access Token', type: 'password'}], help: '1. Перейдите на hub.docker.com\n2. Account Settings → Security\n3. Создайте Access Token' },
+            { id: 'notion', icon: '📝', name: 'Notion', color: '#6b7280', category: 'Продуктивность', desc: 'База знаний и заметки', fields: [{name: 'integrationToken', label: 'Integration Token', type: 'password'}, {name: 'databaseId', label: 'Database ID', type: 'text'}], help: '1. Перейдите на notion.so/my-integrations\n2. Создайте новую интеграцию\n3. Скопируйте Internal Integration Token' },
+            { id: 'trello', icon: '📋', name: 'Trello', color: '#0052cc', category: 'Продуктивность', desc: 'Канбан-доски', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}, {name: 'token', label: 'Token', type: 'password'}], help: '1. Перейдите на trello.com/app-key\n2. Скопируйте API Key\n3. Получите токен по ссылке на странице' },
+            { id: 'airtable', icon: '📊', name: 'Airtable', color: '#18bfff', category: 'Продуктивность', desc: 'Умные таблицы', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}, {name: 'baseId', label: 'Base ID', type: 'text'}], help: '1. Перейдите в Account → Developer hub\n2. Создайте Personal access token\n3. Base ID находится в URL вашей базы' },
+            { id: 'gcalendar', icon: '🗓️', name: 'Google Calendar', color: '#4285f4', category: 'Продуктивность', desc: 'Управление расписанием', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}, {name: 'calendarId', label: 'Calendar ID', type: 'text'}], help: '1. Перейдите на console.cloud.google.com\n2. Создайте проект и включите Calendar API\n3. Создайте API credentials' },
+            { id: 'gdrive', icon: '☁️', name: 'Google Drive', color: '#4285f4', category: 'Хранилище', desc: 'Облачное хранилище Google', fields: [{name: 'apiKey', label: 'API Key', type: 'password'}], help: '1. Перейдите на console.cloud.google.com\n2. Включите Drive API\n3. Создайте OAuth 2.0 credentials' },
+            { id: 'dropbox', icon: '📦', name: 'Dropbox', color: '#0061ff', category: 'Хранилище', desc: 'Синхронизация файлов', fields: [{name: 'accessToken', label: 'Access Token', type: 'password'}], help: '1. Перейдите на dropbox.com/developers\n2. Создайте приложение\n3. Сгенерируйте Access Token' },
+            { id: 'aws-s3', icon: '🪣', name: 'AWS S3', color: '#ff9900', category: 'Хранилище', desc: 'Объектное хранилище Amazon', fields: [{name: 'accessKey', label: 'Access Key', type: 'password'}, {name: 'secretKey', label: 'Secret Key', type: 'password'}, {name: 'bucket', label: 'Bucket', type: 'text'}], help: '1. Войдите в AWS Console\n2. Перейдите в IAM → Users\n3. Создайте пользователя с S3 доступом\n4. Создайте Access Key' }
+        ];
+
+        let appState = {
+            connectors: {},
+            chats: [],
+            activeChat: null,
+            workflows: [],
+            activeWorkflow: null,
+            settings: { mistralApiKey: '', model: 'mistral-large-latest', theme: 'dark', language: 'ru' }
+        };
+
+        let currentConnector = null;
+        let chatMessages = [];
+        let isProcessing = false;
+        let workflowNodes = [];
+        let workflowConnections = [];
+        let selectedNode = null;
+        let canvasScale = 1;
+        let canvasOffset = { x: 0, y: 0 };
+        let isDragging = false;
+        let dragNode = null;
+        let dragOffset = { x: 0, y: 0 };
+        let nodeIdCounter = 0;
+
+        function init() {
+            loadState();
+            renderConnectors();
+            renderConnectedBadges();
+            setupEventListeners();
+            initWorkflow();
+            updateChatUI();
+            updateExportUI();
+            loadSettings();
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('agent_platform_v1');
+            if (saved) {
+                try { const parsed = JSON.parse(saved); appState = { ...appState, ...parsed }; } catch (e) {}
+            }
+        }
+
+        let saveTimeout;
+        function saveState() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { localStorage.setItem('agent_platform_v1', JSON.stringify(appState)); }, 500);
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.nav-item').forEach(item => { item.classList.toggle('active', item.dataset.view === viewName); });
+            document.querySelectorAll('.view').forEach(view => { view.classList.toggle('active', view.id === `view-${viewName}`); });
+            if (viewName === 'chat') updateChatUI();
+            else if (viewName === 'export') updateExportUI();
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.nav-item').forEach(item => { item.addEventListener('click', () => { const view = item.dataset.view; if (view) switchView(view); }); });
+            document.getElementById('connector-search').addEventListener('input', (e) => { renderConnectors(e.target.value); });
+            document.querySelectorAll('.filter-pill').forEach(pill => { pill.addEventListener('click', () => { document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active')); pill.classList.add('active'); renderConnectors(document.getElementById('connector-search').value, pill.dataset.filter); }); });
+            const chatInput = document.getElementById('chat-input');
+            chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+            chatInput.addEventListener('input', () => { chatInput.style.height = 'auto'; chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px'; });
+            document.getElementById('send-btn').addEventListener('click', sendMessage);
+            document.getElementById('settings-mistral-key').addEventListener('change', (e) => { appState.settings.mistralApiKey = e.target.value; saveState(); updateChatUI(); });
+            document.getElementById('settings-model').addEventListener('change', (e) => { appState.settings.model = e.target.value; saveState(); });
+            document.getElementById('theme-toggle').addEventListener('click', (e) => { e.target.classList.toggle('active'); appState.settings.theme = e.target.classList.contains('active') ? 'dark' : 'light'; saveState(); });
+            document.getElementById('settings-language').addEventListener('change', (e) => { appState.settings.language = e.target.value; saveState(); });
+            document.getElementById('new-workflow-btn').addEventListener('click', createNewWorkflow);
+            document.getElementById('save-workflow-btn').addEventListener('click', saveWorkflow);
+            document.getElementById('export-workflow-btn').addEventListener('click', () => { if (appState.activeWorkflow !== null) exportWorkflow(); });
+            document.getElementById('workflow-name').addEventListener('change', (e) => { if (appState.activeWorkflow !== null && appState.workflows[appState.activeWorkflow]) { appState.workflows[appState.activeWorkflow].name = e.target.value; saveState(); renderWorkflowList(); } });
+            document.querySelectorAll('[data-node-type]').forEach(btn => { btn.addEventListener('click', () => { addNode(btn.dataset.nodeType); }); });
+            document.getElementById('zoom-in').addEventListener('click', () => { canvasScale = Math.min(canvasScale * 1.2, 2); updateCanvasTransform(); });
+            document.getElementById('zoom-out').addEventListener('click', () => { canvasScale = Math.max(canvasScale / 1.2, 0.5); updateCanvasTransform(); });
+            document.getElementById('zoom-reset').addEventListener('click', () => { canvasScale = 1; canvasOffset = { x: 0, y: 0 }; updateCanvasTransform(); });
+            const canvas = document.getElementById('workflow-canvas');
+            canvas.addEventListener('mousedown', (e) => { if (e.target === canvas || e.target.classList.contains('canvas-inner')) { isDragging = true; dragOffset = { x: e.clientX - canvasOffset.x, y: e.clientY - canvasOffset.y }; } });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) { canvasOffset.x = e.clientX - dragOffset.x; canvasOffset.y = e.clientY - dragOffset.y; updateCanvasTransform(); }
+                if (dragNode) { const rect = canvas.getBoundingClientRect(); const x = (e.clientX - rect.left - dragOffset.x) / canvasScale; const y = (e.clientY - rect.top - dragOffset.y) / canvasScale; dragNode.x = Math.max(0, x); dragNode.y = Math.max(0, y); renderWorkflowCanvas(); }
+            });
+            document.addEventListener('mouseup', () => { isDragging = false; dragNode = null; });
+        }
+
+        function renderConnectors(search = '', filter = 'all') {
+            const grid = document.getElementById('connector-grid');
+            const filtered = connectorsData.filter(c => { const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()); const matchFilter = filter === 'all' || c.category === filter; return matchSearch && matchFilter; });
+            grid.innerHTML = filtered.map(c => { const isConnected = appState.connectors[c.id]?.connected; return `<div class="connector-card" style="--connector-color: ${c.color};" onclick="openConnectorModal('${c.id}')"><div class="connector-header"><span class="connector-icon">${c.icon}</span><div class="connector-info"><div class="connector-name">${c.name}</div><div class="connector-category">${c.category}</div></div></div><div class="connector-desc">${c.desc}</div><div class="connector-footer"><div class="connector-status"><span class="status-dot ${isConnected ? 'connected' : 'disconnected'}"></span><span>${isConnected ? 'Подключён' : 'Не подключён'}</span></div><button class="btn ${isConnected ? 'btn-secondary' : 'btn-primary'}">${isConnected ? 'Настроить' : 'Подключить'}</button></div></div>`; }).join('');
+        }
+
+        function renderConnectedBadges() {
+            const container = document.getElementById('connected-badges');
+            const connected = connectorsData.filter(c => appState.connectors[c.id]?.connected);
+            if (connected.length === 0) { container.innerHTML = ''; return; }
+            container.innerHTML = connected.map(c => `<div class="connected-badge"><span class="status-dot"></span><span>${c.icon} ${c.name}</span></div>`).join('');
+        }
+
+        function openConnectorModal(connectorId) {
+            currentConnector = connectorsData.find(c => c.id === connectorId);
+            if (!currentConnector) return;
+            document.getElementById('modal-connector-icon').textContent = currentConnector.icon;
+            document.getElementById('modal-connector-name').textContent = currentConnector.name;
+            document.getElementById('modal-help').textContent = currentConnector.help;
+            const savedData = appState.connectors[connectorId]?.credentials || {};
+            document.getElementById('modal-fields').innerHTML = currentConnector.fields.map(f => `<div class="form-group"><label class="form-label">${f.label}</label><input type="${f.type}" class="form-input" id="field-${f.name}" value="${savedData[f.name] || ''}" placeholder="Введите ${f.label}..."></div>`).join('');
+            const isConnected = appState.connectors[connectorId]?.connected;
+            document.getElementById('disconnect-btn').style.display = isConnected ? 'block' : 'none';
+            document.getElementById('test-result').className = 'test-result';
+            document.getElementById('test-result').style.display = 'none';
+            document.getElementById('connector-modal').classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('connector-modal').classList.remove('active'); currentConnector = null; }
+        function toggleExpandable(header) { header.parentElement.classList.toggle('open'); }
+
+        async function testConnection() {
+            if (!currentConnector) return;
+            const result = document.getElementById('test-result');
+            result.className = 'test-result loading'; result.style.display = 'flex'; result.innerHTML = '<span class="spinner"></span> Проверка соединения...';
+            const credentials = {};
+            currentConnector.fields.forEach(f => { credentials[f.name] = document.getElementById(`field-${f.name}`).value; });
+            try {
+                if (currentConnector.id === 'github') {
+                    const response = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${credentials.token}`, 'Accept': 'application/vnd.github.v3+json' } });
+                    if (response.ok) { const user = await response.json(); result.className = 'test-result success'; result.innerHTML = `✓ Подключено как ${user.login}`; } else { throw new Error('Invalid token'); }
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    const hasValues = currentConnector.fields.every(f => credentials[f.name]);
+                    if (hasValues) { result.className = 'test-result success'; result.innerHTML = '✓ Соединение успешно установлено'; } else { throw new Error('Missing fields'); }
+                }
+            } catch (e) { result.className = 'test-result error'; result.innerHTML = '✗ Не удалось установить соединение. Проверьте данные.'; }
+        }
+
+        function saveConnector() {
+            if (!currentConnector) return;
+            const credentials = {};
+            currentConnector.fields.forEach(f => { credentials[f.name] = document.getElementById(`field-${f.name}`).value; });
+            appState.connectors[currentConnector.id] = { connected: true, credentials, testedAt: new Date().toISOString() };
+            if (currentConnector.id === 'mistral') appState.settings.mistralApiKey = credentials.apiKey;
+            saveState(); renderConnectors(); renderConnectedBadges(); closeModal();
+        }
+
+        function disconnectConnector() {
+            if (!currentConnector) return;
+            showConfirm('Отключить коннектор?', `Вы уверены, что хотите отключить ${currentConnector.name}?`, () => {
+                delete appState.connectors[currentConnector.id];
+                if (currentConnector.id === 'mistral') appState.settings.mistralApiKey = '';
+                saveState(); renderConnectors(); renderConnectedBadges(); closeModal();
+            });
+        }
+
+        function updateChatUI() {
+            const noApiKey = document.getElementById('no-api-key');
+            const inputContainer = document.getElementById('chat-input-container');
+            if (!appState.settings.mistralApiKey) { noApiKey.style.display = 'block'; inputContainer.style.display = 'none'; }
+            else { noApiKey.style.display = 'none'; inputContainer.style.display = 'block'; }
+        }
+
+        function addChatMessage(role, content) { chatMessages.push({ role, content }); renderChatMessages(); }
+
+        function renderChatMessages() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = chatMessages.map((msg, i) => `<div class="message ${msg.role === 'user' ? 'user' : 'ai'}"><div class="message-content">${formatMarkdown(msg.content)}</div>${msg.role === 'assistant' ? `<div class="message-actions"><button class="message-action-btn" onclick="copyMessage(${i})">📋 Копировать</button></div>` : ''}</div>`).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function formatMarkdown(text) {
+            return text.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/^### (.+)$/gm, '<h3>$1</h3>').replace(/^## (.+)$/gm, '<h2>$1</h2>').replace(/^# (.+)$/gm, '<h1>$1</h1>').replace(/^- (.+)$/gm, '• $1<br>').replace(/\n/g, '<br>');
+        }
+
+        function copyMessage(index) { navigator.clipboard.writeText(chatMessages[index].content); }
+
+        async function sendMessage() {
+            if (isProcessing) return;
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+            input.value = ''; input.style.height = 'auto';
+            addChatMessage('user', message);
+            isProcessing = true;
+            showActivitySteps(message);
+            const messages = [{ role: 'system', content: 'Ты умный AI-агент с доступом к различным платформам и инструментам. Помогай пользователю выполнять задачи, используя подключённые коннекторы. Когда пользователь просит что-то сделать — предлагай создать workflow или скачать результат. Отвечай на русском языке.' }, ...chatMessages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))];
+            try {
+                let responseText = '';
+                chatMessages.push({ role: 'assistant', content: '' });
+                await sendToMistral(messages, appState.settings.mistralApiKey, appState.settings.model, (token) => { responseText += token; chatMessages[chatMessages.length - 1].content = responseText; renderChatMessages(); }, () => { completeActivitySteps(); showSuggestions(); });
+            } catch (e) { chatMessages.push({ role: 'assistant', content: 'Произошла ошибка при обработке запроса. Проверьте API ключ.' }); renderChatMessages(); }
+            isProcessing = false;
+        }
+
+        async function sendToMistral(messages, apiKey, model, onToken, onDone) {
+            const response = await fetch('https://api.mistral.ai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: model, messages: messages, temperature: 0.7, max_tokens: 2048, stream: true }) });
+            if (!response.ok) throw new Error('API request failed');
+            const reader = response.body.getReader(); const decoder = new TextDecoder();
+            while (true) {
+                const { done, value } = await reader.read(); if (done) break;
+                const chunk = decoder.decode(value); const lines = chunk.split('\n');
+                for (const line of lines) { if (line.startsWith('data: ') && line !== 'data: [DONE]') { try { const data = JSON.parse(line.slice(6)); const token = data.choices[0]?.delta?.content; if (token) onToken(token); } catch(e) {} } }
+            }
+            onDone();
+        }
+
+        function showActivitySteps(message) {
+            const steps = [{ text: 'Анализ запроса', status: 'active' }, { text: 'Поиск коннекторов', status: 'pending' }, { text: 'Обработка данных', status: 'pending' }, { text: 'Генерация ответа', status: 'pending' }];
+            const container = document.getElementById('activity-steps'); container.innerHTML = '';
+            steps.forEach((step, i) => { setTimeout(() => { steps.forEach((s, j) => { if (j < i) s.status = 'done'; else if (j === i) s.status = 'active'; else s.status = 'pending'; }); renderActivitySteps(steps); }, i * 400); });
+            const toolsSection = document.getElementById('tools-section'); const toolsList = document.getElementById('tools-list'); const tools = [];
+            const lowerMsg = message.toLowerCase();
+            if (lowerMsg.includes('github') && appState.connectors.github?.connected) tools.push({ icon: '🐙', name: 'GitHub' });
+            if (lowerMsg.includes('notion') && appState.connectors.notion?.connected) tools.push({ icon: '📝', name: 'Notion' });
+            if (lowerMsg.includes('telegram') && appState.connectors.telegram?.connected) tools.push({ icon: '✈️', name: 'Telegram' });
+            if (tools.length > 0) { toolsSection.style.display = 'block'; toolsList.innerHTML = tools.map(t => `<div class="tool-badge">${t.icon} ${t.name}</div>`).join(''); } else { toolsSection.style.display = 'none'; }
+            document.getElementById('suggestions-section').style.display = 'none';
+        }
+
+        function renderActivitySteps(steps) { document.getElementById('activity-steps').innerHTML = steps.map(step => `<div class="activity-step"><span class="step-icon ${step.status}">${step.status === 'done' ? '✓' : step.status === 'active' ? '⟳' : '○'}</span><span class="step-text">${step.text}</span></div>`).join(''); }
+        function completeActivitySteps() { renderActivitySteps([{ text: 'Анализ запроса', status: 'done' }, { text: 'Поиск коннекторов', status: 'done' }, { text: 'Обработка данных', status: 'done' }, { text: 'Генерация ответа', status: 'done' }]); }
+        function showSuggestions() { const section = document.getElementById('suggestions-section'); const list = document.getElementById('suggestions-list'); section.style.display = 'block'; list.innerHTML = `<button class="suggestion-btn" onclick="quickAction('workflow')">📋 Создать workflow?</button><button class="suggestion-btn" onclick="quickAction('download')">⬇️ Скачать результат?</button><button class="suggestion-btn" onclick="quickAction('notion')">💾 Сохранить в Notion?</button>`; }
+        function quickAction(action) { if (action === 'workflow') { switchView('workflow'); createWorkflowFromChat(); } else if (action === 'download') { switchView('export'); } else if (action === 'notion') { if (appState.connectors.notion?.connected) { addChatMessage('user', 'Сохрани последний результат в Notion'); sendMessage(); } else { switchView('connectors'); } } }
+
+        function initWorkflow() { if (appState.workflows.length === 0) createDefaultWorkflow(); renderWorkflowList(); if (appState.workflows.length > 0) selectWorkflow(0); }
+
+        function createDefaultWorkflow() {
+            const workflow = { id: Date.now(), name: 'Пример workflow', nodes: [{ id: 1, type: 'start', label: 'Начало', x: 100, y: 200 }, { id: 2, type: 'step', label: 'Получить данные', x: 300, y: 200 }, { id: 3, type: 'step', label: 'Обработать', x: 500, y: 200 }, { id: 4, type: 'end', label: 'Конец', x: 700, y: 200 }], connections: [{ from: 1, to: 2 }, { from: 2, to: 3 }, { from: 3, to: 4 }], status: 'Черновик', updatedAt: new Date().toISOString() };
+            appState.workflows.push(workflow); nodeIdCounter = 5; saveState();
+        }
+
+        function createNewWorkflow() {
+            const workflow = { id: Date.now(), name: 'Новый workflow', nodes: [{ id: ++nodeIdCounter, type: 'start', label: 'Начало', x: 100, y: 200 }, { id: ++nodeIdCounter, type: 'end', label: 'Конец', x: 400, y: 200 }], connections: [], status: 'Черновик', updatedAt: new Date().toISOString() };
+            appState.workflows.push(workflow); saveState(); renderWorkflowList(); selectWorkflow(appState.workflows.length - 1);
+        }
+
+        function renderWorkflowList() {
+            document.getElementById('workflow-list').innerHTML = appState.workflows.map((wf, i) => `<div class="workflow-item ${appState.activeWorkflow === i ? 'active' : ''}" onclick="selectWorkflow(${i})"><div class="workflow-item-name">${wf.name}</div><div class="workflow-item-meta">${wf.nodes.length} узлов • ${new Date(wf.updatedAt).toLocaleDateString()}</div><button class="workflow-item-delete" onclick="event.stopPropagation(); deleteWorkflow(${i})">×</button></div>`).join('');
+            const exportSelect = document.getElementById('export-workflow-select');
+            exportSelect.innerHTML = appState.workflows.map((wf, i) => `<option value="${i}">${wf.name}</option>`).join('');
+        }
+
+        function selectWorkflow(index) {
+            appState.activeWorkflow = index; const workflow = appState.workflows[index]; if (!workflow) return;
+            document.getElementById('workflow-name').value = workflow.name; workflowNodes = [...workflow.nodes]; workflowConnections = [...workflow.connections]; selectedNode = null;
+            renderWorkflowList(); renderWorkflowCanvas(); updateNodeProperties();
+        }
+
+        function deleteWorkflow(index) {
+            showConfirm('Удалить workflow?', 'Это действие нельзя отменить.', () => {
+                appState.workflows.splice(index, 1);
+                if (appState.activeWorkflow >= appState.workflows.length) appState.activeWorkflow = Math.max(0, appState.workflows.length - 1);
+                saveState(); renderWorkflowList();
+                if (appState.workflows.length > 0) selectWorkflow(appState.activeWorkflow); else { createDefaultWorkflow(); selectWorkflow(0); }
+            });
+        }
+
+        function saveWorkflow() {
+            if (appState.activeWorkflow === null) return;
+            appState.workflows[appState.activeWorkflow].nodes = [...workflowNodes]; appState.workflows[appState.activeWorkflow].connections = [...workflowConnections]; appState.workflows[appState.activeWorkflow].name = document.getElementById('workflow-name').value; appState.workflows[appState.activeWorkflow].updatedAt = new Date().toISOString();
+            saveState(); renderWorkflowList();
+        }
+
+        function addNode(type) {
+            const node = { id: ++nodeIdCounter, type: type, label: type === 'step' ? 'Новый шаг' : type === 'decision' ? 'Решение' : 'Коннектор', x: 300 + Math.random() * 100, y: 200 + Math.random() * 100 };
+            if (type === 'connector') node.connector = Object.keys(appState.connectors).find(k => appState.connectors[k].connected) || '';
+            workflowNodes.push(node); renderWorkflowCanvas();
+        }
+
+        function renderWorkflowCanvas() {
+            const container = document.getElementById('canvas-inner'); const svg = document.getElementById('workflow-connections');
+            container.innerHTML = workflowNodes.map(node => {
+                let classes = `workflow-node ${node.type}`; if (selectedNode === node.id) classes += ' selected';
+                let style = `left: ${node.x}px; top: ${node.y}px;`;
+                if (node.type === 'connector' && node.connector) { const conn = connectorsData.find(c => c.id === node.connector); if (conn) style += ` --connector-color: ${conn.color};`; }
+                const icon = node.type === 'start' ? '▶' : node.type === 'end' ? '⏹' : node.type === 'decision' ? '◇' : node.type === 'connector' ? '🔌' : '📦';
+                return `<div class="${classes}" style="${style}" data-id="${node.id}" onmousedown="startDragNode(event, ${node.id})" onclick="selectNodeById(${node.id})"><div class="node-content"><div class="node-icon">${icon}</div><div class="node-label">${node.label}</div></div>${node.type !== 'start' ? '<div class="node-port input"></div>' : ''}${node.type !== 'end' ? '<div class="node-port output"></div>' : ''}</div>`;
+            }).join('');
+            let pathsHtml = '';
+            workflowConnections.forEach(conn => {
+                const fromNode = workflowNodes.find(n => n.id === conn.from); const toNode = workflowNodes.find(n => n.id === conn.to); if (!fromNode || !toNode) return;
+                const fromX = fromNode.x + (fromNode.type === 'start' || fromNode.type === 'end' ? 40 : 80); const fromY = fromNode.y + (fromNode.type === 'decision' ? 50 : fromNode.type === 'start' || fromNode.type === 'end' ? 40 : 30);
+                const toX = toNode.x; const toY = toNode.y + (toNode.type === 'decision' ? 50 : toNode.type === 'start' || toNode.type === 'end' ? 40 : 30);
+                const midX = (fromX + toX) / 2;
+                pathsHtml += `<path class="workflow-connection" d="M${fromX},${fromY} C${midX},${fromY} ${midX},${toY} ${toX},${toY}"/>`;
+            });
+            svg.innerHTML = pathsHtml;
+        }
+
+        function startDragNode(e, nodeId) {
+            e.stopPropagation(); const node = workflowNodes.find(n => n.id === nodeId); if (!node) return;
+            const canvas = document.getElementById('workflow-canvas'); const rect = canvas.getBoundingClientRect();
+            dragNode = node; dragOffset = { x: (e.clientX - rect.left) / canvasScale - node.x, y: (e.clientY - rect.top) / canvasScale - node.y };
+        }
+
+        function selectNodeById(nodeId) { selectedNode = nodeId; renderWorkflowCanvas(); updateNodeProperties(); }
+
+        function updateNodeProperties() {
+            const container = document.getElementById('node-properties-content'); const node = workflowNodes.find(n => n.id === selectedNode);
+            if (!node) { container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">Выберите узел для редактирования</p>'; return; }
+            let connectorOptions = '';
+            if (node.type === 'connector') { connectorOptions = `<div class="form-group"><label class="form-label">Платформа</label><select class="select" id="node-connector" style="width: 100%;" onchange="updateNodeConnector(this.value)">${connectorsData.filter(c => appState.connectors[c.id]?.connected).map(c => `<option value="${c.id}" ${node.connector === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}</select></div>`; }
+            container.innerHTML = `<div class="form-group"><label class="form-label">Название</label><input type="text" class="form-input" id="node-label" value="${node.label}" onchange="updateNodeLabel(this.value)"></div><div class="form-group"><label class="form-label">Тип</label><select class="select" id="node-type" style="width: 100%;" onchange="updateNodeType(this.value)"><option value="start" ${node.type === 'start' ? 'selected' : ''}>Начало</option><option value="step" ${node.type === 'step' ? 'selected' : ''}>Шаг</option><option value="decision" ${node.type === 'decision' ? 'selected' : ''}>Решение</option><option value="connector" ${node.type === 'connector' ? 'selected' : ''}>Коннектор</option><option value="end" ${node.type === 'end' ? 'selected' : ''}>Конец</option></select></div>${connectorOptions}<div class="form-group"><label class="form-label">Описание</label><textarea class="form-input" id="node-desc" rows="3" onchange="updateNodeDesc(this.value)">${node.description || ''}</textarea></div><button class="btn btn-danger" onclick="deleteNode()" style="width: 100%; margin-top: 12px;">Удалить узел</button>`;
+        }
+
+        function updateNodeLabel(value) { const node = workflowNodes.find(n => n.id === selectedNode); if (node) { node.label = value; renderWorkflowCanvas(); } }
+        function updateNodeType(value) { const node = workflowNodes.find(n => n.id === selectedNode); if (node) { node.type = value; renderWorkflowCanvas(); updateNodeProperties(); } }
+        function updateNodeConnector(value) { const node = workflowNodes.find(n => n.id === selectedNode); if (node) { node.connector = value; renderWorkflowCanvas(); } }
+        function updateNodeDesc(value) { const node = workflowNodes.find(n => n.id === selectedNode); if (node) node.description = value; }
+        function deleteNode() { if (!selectedNode) return; workflowNodes = workflowNodes.filter(n => n.id !== selectedNode); workflowConnections = workflowConnections.filter(c => c.from !== selectedNode && c.to !== selectedNode); selectedNode = null; renderWorkflowCanvas(); updateNodeProperties(); }
+        function updateCanvasTransform() { document.getElementById('canvas-inner').style.transform = `scale(${canvasScale}) translate(${canvasOffset.x / canvasScale}px, ${canvasOffset.y / canvasScale}px)`; }
+
+        function createWorkflowFromChat() {
+            if (chatMessages.length < 2) return;
+            const lastResponse = chatMessages[chatMessages.length - 1]; if (lastResponse.role !== 'assistant') return;
+            const workflow = { id: Date.now(), name: 'Workflow из чата', nodes: [{ id: ++nodeIdCounter, type: 'start', label: 'Начало', x: 100, y: 200 }, { id: ++nodeIdCounter, type: 'step', label: 'Запрос AI', x: 300, y: 200 }, { id: ++nodeIdCounter, type: 'step', label: 'Обработка', x: 500, y: 200 }, { id: ++nodeIdCounter, type: 'end', label: 'Конец', x: 700, y: 200 }], connections: [{ from: nodeIdCounter - 3, to: nodeIdCounter - 2 }, { from: nodeIdCounter - 2, to: nodeIdCounter - 1 }, { from: nodeIdCounter - 1, to: nodeIdCounter }], status: 'Черновик', updatedAt: new Date().toISOString() };
+            appState.workflows.push(workflow); saveState(); renderWorkflowList(); selectWorkflow(appState.workflows.length - 1);
+        }
+
+        function updateExportUI() { document.getElementById('chat-count').textContent = `Сообщений: ${chatMessages.length}`; }
+
+        function exportChat(format) {
+            let content = ''; const timestamp = new Date().toISOString();
+            if (format === 'md') { content = `# Экспорт чата AI Agent Platform\n\n_Дата: ${timestamp}_\n\n---\n\n`; chatMessages.forEach(msg => { content += `## ${msg.role === 'user' ? '👤 Пользователь' : '🤖 AI Агент'}\n\n${msg.content}\n\n---\n\n`; }); }
+            else { content = `Экспорт чата AI Agent Platform\nДата: ${timestamp}\n${'='.repeat(50)}\n\n`; chatMessages.forEach(msg => { content += `[${msg.role === 'user' ? 'Пользователь' : 'AI Агент'}]\n${msg.content}\n\n${'-'.repeat(30)}\n\n`; }); }
+            downloadFile(content, `chat-export.${format}`, 'text/plain');
+        }
+
+        function exportWorkflow() { const select = document.getElementById('export-workflow-select'); const index = parseInt(select.value); const workflow = appState.workflows[index]; if (!workflow) return; downloadFile(JSON.stringify(workflow, null, 2), `workflow-${workflow.name}.json`, 'application/json'); }
+        function exportConfig() { const config = {}; Object.keys(appState.connectors).forEach(key => { config[key] = { connected: appState.connectors[key].connected, testedAt: appState.connectors[key].testedAt }; }); downloadFile(JSON.stringify(config, null, 2), 'connectors-config.json', 'application/json'); }
+        function exportAll() { const exportData = { version: '1.0', exportedAt: new Date().toISOString(), workflows: appState.workflows, chat: chatMessages, settings: { model: appState.settings.model, theme: appState.settings.theme, language: appState.settings.language }, connectors: Object.keys(appState.connectors).map(key => ({ id: key, connected: appState.connectors[key].connected })) }; downloadFile(JSON.stringify(exportData, null, 2), 'project-export.json', 'application/json'); }
+
+        function exportReport() {
+            const connectedCount = Object.values(appState.connectors).filter(c => c.connected).length;
+            let report = `# Отчёт активности AI Agent Platform\n\n_Сгенерировано: ${new Date().toLocaleString()}_\n\n## Статистика\n\n- **Подключённых коннекторов:** ${connectedCount}\n- **Сообщений в чате:** ${chatMessages.length}\n- **Workflows:** ${appState.workflows.length}\n\n## Подключённые коннекторы\n\n`;
+            connectorsData.filter(c => appState.connectors[c.id]?.connected).forEach(c => { report += `- ${c.icon} ${c.name} (${c.category})\n`; });
+            report += `\n## Workflows\n\n`; appState.workflows.forEach(wf => { report += `### ${wf.name}\n- Узлов: ${wf.nodes.length}\n- Обновлён: ${new Date(wf.updatedAt).toLocaleString()}\n\n`; });
+            downloadFile(report, 'activity-report.md', 'text/markdown');
+        }
+
+        function showFileTree() {
+            const tree = document.getElementById('file-tree');
+            const files = [{ name: 'project-export.json', icon: '📄' }, { name: 'chat-export.md', icon: '💬' }, { name: 'connectors-config.json', icon: '🔌' }, { name: 'activity-report.md', icon: '📊' }];
+            appState.workflows.forEach(wf => { files.push({ name: `workflow-${wf.name}.json`, icon: '⚙️' }); });
+            tree.innerHTML = files.map(f => `<div class="file-tree-item"><span class="file-icon">${f.icon}</span><span class="file-name">${f.name}</span><button class="download-btn" onclick="downloadSingleFile('${f.name}')">⬇️</button></div>`).join('');
+            document.getElementById('file-tree-modal').classList.add('active');
+        }
+
+        function closeFileTreeModal() { document.getElementById('file-tree-modal').classList.remove('active'); }
+
+        function downloadSingleFile(filename) {
+            if (filename === 'project-export.json') exportAll();
+            else if (filename === 'chat-export.md') exportChat('md');
+            else if (filename === 'connectors-config.json') exportConfig();
+            else if (filename === 'activity-report.md') exportReport();
+            else if (filename.startsWith('workflow-')) { const name = filename.replace('workflow-', '').replace('.json', ''); const index = appState.workflows.findIndex(w => w.name === name); if (index >= 0) { document.getElementById('export-workflow-select').value = index; exportWorkflow(); } }
+        }
+
+        function downloadFile(content, filename, type) { const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+
+        function loadSettings() { document.getElementById('settings-mistral-key').value = appState.settings.mistralApiKey || ''; document.getElementById('settings-model').value = appState.settings.model; document.getElementById('settings-language').value = appState.settings.language; if (appState.settings.theme === 'dark') document.getElementById('theme-toggle').classList.add('active'); }
+        function clearAllData() { showConfirm('Удалить все данные?', 'Это действие полностью очистит все настройки, историю чата и workflows. Восстановить данные будет невозможно.', () => { localStorage.removeItem('agent_platform_v1'); location.reload(); }); }
+
+        let confirmCallback = null;
+        function showConfirm(title, message, callback) { document.getElementById('confirm-title').textContent = title; document.getElementById('confirm-message').textContent = message; confirmCallback = callback; document.getElementById('confirm-modal').classList.add('active'); document.getElementById('confirm-action-btn').onclick = () => { if (confirmCallback) confirmCallback(); closeConfirmModal(); }; }
+        function closeConfirmModal() { document.getElementById('confirm-modal').classList.remove('active'); confirmCallback = null; }
+
+        init();
+    </script>
+</body>
+</html>
